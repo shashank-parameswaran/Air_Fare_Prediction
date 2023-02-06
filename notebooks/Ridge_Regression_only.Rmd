@@ -1,0 +1,63 @@
+---
+title: "Ridge Regression"
+output: html_notebook
+---
+
+# Import Libraries
+```{r}
+library(data.table)
+library(MASS)
+library(glmnet)
+```
+
+# Load the dataset
+```{r}
+x_train <- fread("x.csv")
+y_train <- fread("y.csv")
+x_test <- fread("x_test.csv")
+y_test <- fread("y_test.csv")
+y_train = unlist(y_train)
+y_train = unname(unlist(y_train))
+y_test <- unname(unlist(y_test))
+print(dim(x_train))
+print(dim(x_test))
+print(length(y_train))
+print(length(y_test))
+
+```
+
+# Fit the Model
+```{r}
+# Get the best value of lambda
+fit2 <- cv.glmnet(as.matrix(x_train), y_train, alpha=0, lambda = seq(0,20,1), type.measure="mse")
+plot(fit2)
+
+```
+
+# Best value of Lambda
+```{r}
+fit2$lambda.min
+```
+
+
+
+```{r}
+fit_ridge <- glmnet(as.matrix(x_train), unlist(y_train), alpha=0, lambda=6.2)
+
+train_preds <- predict(fit_ridge, newx=as.matrix(x_train))
+RMSE_ridge_train <- sqrt(mean((as.vector(train_preds) - as.vector(y_train))^2))
+
+test_preds <- predict(fit_ridge, newx =as.matrix(x_test))
+RMSE_ridge_test <- sqrt(mean((as.vector(test_preds) - as.vector(y_test))^2))
+rf_Rsq = 1 - sum((y_train - train_preds)^2)/sum((y_train - mean(y_train))^2)
+```
+
+# Plot coefficients shrinkage as lambda increases
+```{r}
+ridge <- glmnet(x_train, y_train, alpha=0)
+plot(ridge, xvar = 'lambda')
+abline(v=log(fit2$lambda.min), lty=3)
+abline(v=log(fit2$lambda.1se), lty=3)
+```
+
+
